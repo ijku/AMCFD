@@ -76,7 +76,7 @@ These files contain:
 
 ### Step 1: Types & Config
 
-**Create:** `types.py`, `io.py`  
+**Create:** `amcfd_types.py`, `amcfd_io.py`  
 **Convert:** `mod_const.f90`, `mod_param.f90`
 
 **Prompt:**

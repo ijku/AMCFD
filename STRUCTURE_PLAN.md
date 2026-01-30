@@ -4,7 +4,7 @@
 
 ```
 amcfd_jax/                    # or amcfd_taichi/
-├── types.py          # NamedTuples/dataclasses for state containers
+├── amcfd_types.py    # NamedTuples/dataclasses for state containers
 ├── grid.py           # Non-uniform staggered grid generation
 ├── initial.py        # State initialization (preheat temp/enthalpy)
 ├── boundary.py       # Boundary condition handlers (Marangoni, convection, radiation)
@@ -16,15 +16,15 @@ amcfd_jax/                    # or amcfd_taichi/
 ├── laser.py          # Laser heat source, toolpath loading (.crs files)
 ├── pool.py           # Melt pool dimension calculations (length/depth/width)
 ├── main.py           # Main solver orchestration, time loop
-└── io.py             # Input parsing (input_param.txt), output routines
+└── amcfd_io.py       # Input parsing (input_param.txt), output routines
 ```
 
 ## Data Flow Diagram
 
 ```
-┌──────────────────┐
-│  io.parse_input  │ → SimulationParams, PhysicsParams
-└────────┬─────────┘
+┌──────────────────────────┐
+│  amcfd_io.parse_input    │ → SimulationParams, PhysicsParams
+└────────┬─────────────────┘
          ↓
 ┌──────────────────┐
 │  grid.generate   │ → GridParams (x, y, z, xu, yv, zw, vol, areas)
@@ -53,13 +53,13 @@ amcfd_jax/                    # or amcfd_taichi/
 │  │              convergence.check() → continue/break        │ │
 │  └─────────────────────────────────────────────────────────┘ │
 │                              ↓                                │
-│                    io.write_output()                          │
+│                    amcfd_io.write_output()                    │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## State Container Definitions (types.py)
+## State Container Definitions (amcfd_types.py)
 
 ```python
 from typing import NamedTuple
@@ -198,8 +198,8 @@ These exist only within function scope:
 
 | Module | Fortran Source | Inputs | Outputs | Notes |
 |--------|----------------|--------|---------|-------|
-| `types.py` | - | - | NamedTuples | Data structure definitions |
-| `io.py` | `mod_param`, `mod_print` | input_param.txt | Params, output files | Parse namelist format |
+| `amcfd_types.py` | - | - | NamedTuples | Data structure definitions |
+| `amcfd_io.py` | `mod_param`, `mod_print` | input_param.txt | Params, output files | Parse namelist format |
 | `grid.py` | `mod_geom` | Params | `GridParams` | Power-law stretching |
 | `initial.py` | `mod_init` | Params, Grid | `State` | Initialize to preheat T |
 | `properties.py` | `mod_prop`, `mod_entot` | State, Params | `MaterialProps`, T↔H | 3-region phase change |
@@ -367,19 +367,19 @@ main.iteration()
 
 | Module | Imports From |
 |--------|--------------|
-| `types.py` | (none) |
-| `io.py` | `types` |
-| `grid.py` | `types` |
-| `initial.py` | `types` |
-| `laser.py` | `types` |
-| `properties.py` | `types` |
-| `boundary.py` | `types`, `properties` |
-| `source.py` | `types`, `properties` |
-| `discretization.py` | `types` |
-| `solver.py` | `types` |
-| `pool.py` | `types` |
-| `convergence.py` | `types` |
-| `main.py` | `types`, `io`, `grid`, `initial`, `laser`, `properties`, `boundary`, `source`, `discretization`, `solver`, `pool`, `convergence` |
+| `amcfd_types.py` | (none) |
+| `amcfd_io.py` | `amcfd_types` |
+| `grid.py` | `amcfd_types` |
+| `initial.py` | `amcfd_types` |
+| `laser.py` | `amcfd_types` |
+| `properties.py` | `amcfd_types` |
+| `boundary.py` | `amcfd_types`, `properties` |
+| `source.py` | `amcfd_types`, `properties` |
+| `discretization.py` | `amcfd_types` |
+| `solver.py` | `amcfd_types` |
+| `pool.py` | `amcfd_types` |
+| `convergence.py` | `amcfd_types` |
+| `main.py` | `amcfd_types`, `amcfd_io`, `grid`, `initial`, `laser`, `properties`, `boundary`, `source`, `discretization`, `solver`, `pool`, `convergence` |
 
 ---
 
@@ -387,8 +387,8 @@ main.iteration()
 
 | Fortran Module | JAX/Taichi Module | Key Functions |
 |----------------|-------------------|---------------|
-| `mod_const.f90` | `types.py` | Physical constants in PhysicsParams |
-| `mod_param.f90` | `io.py` | `parse_input()` |
+| `mod_const.f90` | `amcfd_types.py` | Physical constants in PhysicsParams |
+| `mod_param.f90` | `amcfd_io.py` | `parse_input()` |
 | `mod_geom.f90` | `grid.py` | `generate_grid()` |
 | `mod_init.f90` | `initial.py` | `initialize_state()` |
 | `mod_prop.f90` | `properties.py` | `compute_properties()` |
@@ -404,5 +404,5 @@ main.iteration()
 | `mod_resid.f90` | `convergence.py` | `compute_residual()` |
 | `mod_revise.f90` | `main.py` | `pressure_correction()` |
 | `mod_flux.f90` | `convergence.py` | `compute_heat_balance()` |
-| `mod_print.f90` | `io.py` | `write_output()`, `write_tecplot()` |
+| `mod_print.f90` | `amcfd_io.py` | `write_output()`, `write_tecplot()` |
 | `main.f90` | `main.py` | `run_simulation()`, time/iteration loops |
